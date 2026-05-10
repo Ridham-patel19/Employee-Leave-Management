@@ -1,0 +1,91 @@
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="page-kicker">Welcome Back</div>
+        <h1 class="page-title">Sign in to continue</h1>
+        <p class="page-subtitle">Access the leave portal with a simple, clean sign-in experience.</p>
+    </div>
+
+    <form id="loginform">
+
+    </form>
+
+    <div class="mt-3">
+        <a asp-controller="Auth" asp-action="Register" class="app-btn-outline">Create an account</a>
+    </div>
+
+    <div id="notification">
+
+    </div>
+</div>
+
+
+@section Scripts{
+    <script>
+
+        
+        $(document).ready(function(){
+            var notification = $("#notification").kendoNotification({
+                position: { pinned: true, top: 30, right: 30 },
+                autoHideAfter: 3000,
+                stacking: "down"
+            }).data("kendoNotification");
+
+ $("#loginform").kendoForm({
+    
+     items: [
+         { field: "Email", label: "Email" , validation:{required:true , email:true} },
+         { field: "Password", label: "Password" , validation:{required:true},editor:function(container,options){
+            $(`<input type="password" data-bind=value:${options.field} required />`).appendTo(container).kendoTextBox({
+                placeholder: "Enter Password...",
+                clearButton: false
+            })
+         } }
+     ],
+     buttonsTemplate: "<button class='k-button k-primary'>Submit</button>",
+  
+  submit:function(e){
+
+    e.preventDefault();
+
+    
+          var fd = new FormData();
+
+          fd.append("Email" , e.model.Email)
+          fd.append("Password" , e.model.Password)
+
+          $.ajax({
+            type: "POST",
+            url: "http://localhost:5043/Auth/Login",
+            data: fd,
+            processData:false,
+            contentType:false,
+            success: function (response) {
+                notification.success("Login Successfull....");
+
+                console.log(response.role)
+                 if(response.role == "Admin"){
+               window.location.href = "http://localhost:5043/Admin/DashBoard"
+               alert("your role is "  + response.role)
+                 }else{
+                    window.location.href = "/Employee/Dashboard"
+                 }
+            },
+            error: function (res) { 
+notification.error(res.responseJSON?.message);
+             }
+          });
+
+
+  }
+ });
+
+        })
+
+
+
+    </script>
+}

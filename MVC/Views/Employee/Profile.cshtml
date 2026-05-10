@@ -1,0 +1,121 @@
+@model MVC.User
+
+@{
+    ViewData["Title"] = "Update Profile";
+}
+
+<div class="form-card">
+    <div class="back-link">
+        <a asp-controller="Employee" asp-action="Dashboard" class="app-btn-outline">Back to dashboard</a>
+    </div>
+
+    <div class="form-header">
+        <div class="page-kicker">Employee Profile</div>
+        <h1 class="page-title">Update your profile</h1>
+        <p class="page-subtitle">Review your current information, change what you need, and keep the account details up to date.</p>
+    </div>
+
+    <form id="profileForm"></form>
+
+    <div id="notification"></div>
+</div>
+
+@section Scripts{
+<script>
+    $(document).ready(function () {
+        const initialProfile = {
+            Name: "@Model.Name",
+            Email: "@Model.Email",
+            Password: "@Model.Password",
+            Gender: "@Model.Gender"
+        };
+
+        const notification = $("#notification").kendoNotification({
+            position: { pinned: true, top: 30, right: 30 },
+            autoHideAfter: 3000,
+            stacking: "down"
+        }).data("kendoNotification");
+
+        $("#profileForm").kendoForm({
+            formData: initialProfile,
+            items: [
+                { field: "Name", label: "Name", validation: { required: true } },
+                { field: "Email", label: "Email", validation: { required: true, email: true } },
+                {
+                    field: "Password",
+                    label: "Password",
+                    editor: function(container, options){
+                        $(`<input type="password" data-bind="value:${options.field}" required minlength="8" pattern="^(?=.*[A-Za-z])(?=.*\\d).{8,}$" validationMessage="Use at least 8 characters with letters and numbers." />`)
+                            .appendTo(container)
+                            .kendoTextBox({
+                                placeholder: "Minimum 8 chars, 1 letter, 1 number"
+                            });
+                    },
+                    validation: { required: true }
+                },
+                {
+                    field: "Gender",
+                    label: "Gender",
+                    validation: { required: true },
+                    editor: function(container, options) {
+                        const wrapper = $(`<div></div>`).appendTo(container);
+                        wrapper.kendoRadioGroup({
+                            items: [
+                                { value: "Male", label: "Male" },
+                                { value: "Female", label: "Female" }
+                            ],
+                            value: options.model.get("Gender"),
+                            change: function(e) {
+                                options.model.set("Gender", e.sender.value());
+                            }
+                        });
+                        wrapper.find("input[type='radio']").attr("name", "Gender");
+                    }
+                },
+                {
+                    field: "ProfilePic",
+                    label: "Image",
+                    editor: function(container, options) {
+                        $(`<input type="file" name="ProfilePic" id="profileImageInput" />`)
+                            .appendTo(container);
+                    }
+                }
+            ],
+            submit: function(e) {
+                e.preventDefault();
+
+                const formData = new FormData();
+                formData.append("Name", e.model.Name);
+                formData.append("Email", e.model.Email);
+                formData.append("Password", e.model.Password);
+                formData.append("Gender", e.model.Gender);
+
+                const fileInput = document.getElementById("profileImageInput");
+                const file = fileInput.files[0];
+                if (file) {
+                    formData.append("ProfilePic", file);
+                }
+
+                $.ajax({
+                    url: "/Employee/UpdateProfile",
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        notification.success(response.message);
+                    },
+                    error: function (xhr) {
+                        if (xhr.responseJSON === 1) {
+                            window.location.href = "/Auth/Login";
+                            return;
+                        }
+
+                        notification.error(xhr.responseJSON?.message || "Error while updating profile");
+                    }
+                });
+            }
+        });
+    });
+</script>
+}

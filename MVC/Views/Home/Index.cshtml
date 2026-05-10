@@ -1,0 +1,35 @@
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<section class="hero-card split-hero">
+    <div>
+        <div class="page-kicker">Leave Management</div>
+        <h1 class="page-title">A clearer leave portal for employees and admins</h1>
+        <p class="page-subtitle">Manage leave applications, review balances, and maintain leave types in a simple interface built around white space and calm sky-blue accents.</p>
+        <div class="page-actions mt-4">
+            <a asp-controller="Auth" asp-action="Login" class="app-btn">Login</a>
+            <a asp-controller="Auth" asp-action="Register" class="app-btn-outline">Register</a>
+        </div>
+    </div>
+    <div class="stat-panel">
+        <div class="stat-chip">
+            <strong>Employee</strong>
+            <span>View applications, filter results, and submit leave in a few steps.</span>
+        </div>
+        <div class="stat-chip">
+            <strong>Admin</strong>
+            <span>Maintain leave types with the current grid flow and popup editing.</span>
+        </div>
+        <div class="stat-chip">
+            <strong>Clean UI</strong>
+            <span>White and sky-blue styling with no backend behavior changed.</span>
+        </div>
+    </div>
+</section>
+
+<section class="section-card mt-4">
+    <div class="page-kicker">Quick Start</div>
+    <h2 class="h3 mb-3">Everything stays functional, only the design changes</h2>
+    <p class="page-subtitle">Your existing controllers, repository logic, Kendo grids, filters, and forms continue to work the same way while the interface feels lighter and more organized.</p>
+</section>

@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="dashboard-card">
+    <div class="page-toolbar">
+        <div>
+            <div class="page-kicker">Admin Panel</div>
+            <h1 class="page-title">Manage leave types</h1>
+            <p class="page-subtitle">Use the same working grid, popup editing, and filtering inside a cleaner white and sky-blue workspace.</p>
+        </div>
+    </div>
+
+    <div class="grid-shell">
+        <div id="grid">
+
+        </div>
+    </div>
+
+    <div id="notification">
+
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+
+            
+
+        $(document).ready(function () {
+                
+           
+                
+        $("#grid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "GetAllLeave",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "Create",
+                        type: "POST",
+                        contentType: "application/json"
+                    },
+                    update: {
+                        url: "Update",
+                        type: "POST",
+                        contentType: "application/json"
+                    },
+                    destroy: {
+                        url: "Delete",
+                        type: "POST",
+                        contentType: "application/json"
+                    },
+                    parameterMap: function(data, type) {
+if(type == "destroy"){
+                            return JSON.stringify(data.leaveId)
+                        }
+
+                        if (type !== "read") {
+                            return JSON.stringify(data);
+                        }
+
+                       
+
+                      
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "leaveId",
+                        fields: {
+                            leaveId: { editable: false, nullable: true  },
+                            
+                            type: { type: "string" },
+                            maxLeave: { type: "string" }
+                        }
+                    }
+                },
+                pageSize: 10
+            },
+            toolbar: ["create"],
+            pageable: true,
+            sortable: true,
+            filterable: true,
+            editable: "popup",
+               edit: function(e) {
+if (e.model.isNew()) {
+    e.container.find(".k-grid-update").text("Add");
+} else {
+    e.container.find(".k-grid-update").text("Update");
+}
+},
+            columns: [
+                { field: "leaveId", title: "Id", width: "60px" },
+                { field: "type", title: "TYPE" },
+                { field: "maxLeave", title: "MAX LEAVE" },
+               
+                {
+                    command: ["edit", "destroy"],
+                    title: "Actions",
+                    width: "200px"
+                }
+            ]
+        });
+         })
+    </script>
+}

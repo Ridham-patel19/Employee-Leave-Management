@@ -1,0 +1,299 @@
+@{
+    ViewData["Title"] = "Apply Leave";
+}
+
+<div class="form-card">
+    <div class="back-link">
+        <a asp-controller="Employee" asp-action="Dashboard" class="app-btn-outline">Back to dashboard</a>
+    </div>
+
+    <div class="form-header">
+        <div class="page-kicker">Application Form</div>
+        <h1 class="page-title">Apply for leave</h1>
+        <p class="page-subtitle">Choose the leave type, select your dates, and submit your reason in a simpler, cleaner layout.</p>
+    </div>
+
+    <form id="registrationForm"></form>
+
+    <div id="notification"></div>
+</div>
+
+@section Scripts{
+
+<script>
+
+    $(document).ready(function () {
+
+        function formatDateForPost(dateValue) {
+            if (!dateValue) {
+                return "";
+            }
+
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) {
+                return "";
+            }
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+        }
+
+        // Notification
+        const notification = $("#notification").kendoNotification({
+
+            position: {
+                pinned: true,
+                top: 30,
+                right: 30
+            },
+
+            autoHideAfter: 3000,
+            stacking: "down"
+
+        }).data("kendoNotification");
+
+
+
+        // Form
+        $("#registrationForm").kendoForm({
+
+            formData: {
+
+                LeaveId: "",
+                StartDate: new Date(),
+                EndDate: new Date(),
+                Reason: ""
+
+            },
+
+            items: [
+
+                // Leave Dropdown
+                {
+                    field: "LeaveId",
+                    label: "Leave",
+                    validation: { required: true },
+
+                    editor: function (container, options) {
+
+                        $('<input data-bind="value:' + options.field + '"/>')
+
+                            .appendTo(container)
+
+                            .kendoDropDownList({
+
+                                optionLabel: "Select Leave",
+
+                                dataTextField: "type",
+                                dataValueField: "leaveId",
+
+                                dataSource: {
+
+                                    transport: {
+
+                                        read: {
+
+                                            url: "/Admin/GetAllLeave",
+                                            dataType: "json"
+                                        }
+                                    }
+                                },
+
+                                change: function () {
+
+                                    var value = this.value();
+
+                                    var fd = new FormData();
+
+                                    fd.append("typeid", value);
+
+                                    $.ajax({
+
+                                        type: "POST",
+
+                                        url: "/Employee/GetLeftLeave",
+
+                                        data: fd,
+
+                                        contentType: false,
+                                        processData: false,
+
+                                        success: function (response) {
+
+                                            notification.success(
+                                                `You Have ${response} leave left`
+                                            );
+                                        },
+
+                                        error: function (xhr) {
+
+                                            if (xhr.responseJSON === 1) {
+
+                                                window.location.href = "/Auth/Login";
+                                            }
+
+                                            notification.error(
+                                                xhr.responseJSON?.message ||
+                                                "Sorry No Leave Left"
+                                            );
+                                        }
+                                    });
+                                }
+                            });
+                    }
+                },
+
+
+
+                // Start Date
+                {
+                    field: "StartDate",
+                    label: "Starting Date",
+
+                    validation: { required: true },
+
+                    editor: function (container, options) {
+
+                        $('<input data-bind="value:' + options.field + '"/>')
+
+                            .appendTo(container)
+
+                            .kendoDatePicker({
+
+                                value: new Date(),
+
+                                format: "yyyy-MM-dd",
+
+                                min: new Date()
+                            });
+                    }
+                },
+
+
+
+                // End Date
+                {
+                    field: "EndDate",
+                    label: "Ending Date",
+
+                    validation: { required: true },
+
+                    editor: function (container, options) {
+
+                        $('<input data-bind="value:' + options.field + '"/>')
+
+                            .appendTo(container)
+
+                            .kendoDatePicker({
+
+                                value: new Date(),
+
+                                format: "yyyy-MM-dd",
+
+                                min: new Date()
+                            });
+                    }
+                },
+
+
+
+                // Reason
+                {
+                    field: "Reason",
+
+                    label: "Reason Of Leave",
+
+                    validation: { required: true },
+
+                    editor: function (container, options) {
+
+                        $('<textarea data-bind="value:' + options.field + '"></textarea>')
+
+                            .appendTo(container)
+
+                            .css({
+
+                                height: "100px",
+                                width: "100%",
+                                padding: "10px"
+                            });
+                    }
+                }
+            ],
+
+
+
+            // Submit
+            submit: function (e) {
+
+                e.preventDefault();
+
+                const fd = new FormData();
+
+                fd.append("LeaveId", e.model.LeaveId);
+
+                fd.append("StartDate", formatDateForPost(e.model.StartDate));
+
+                fd.append("EndDate", formatDateForPost(e.model.EndDate));
+
+                fd.append("Reason", e.model.Reason);
+
+
+
+                $.ajax({
+
+                    url: "/Employee/Application",
+
+                    type: "POST",
+
+                    data: fd,
+
+                    contentType: false,
+
+                    processData: false,
+
+
+
+                    success: function (response) {
+
+                        notification.success(
+                            response.message
+                        );
+
+                        $("#registrationForm")
+                            .data("kendoForm")
+                            .clear();
+                    },
+
+
+
+                    error: function (xhr) {
+
+                        console.log(xhr);
+
+                        if (xhr.responseJSON === 1) {
+
+                            window.location.href = "/Auth/Login";
+
+                            return;
+                        }
+
+                        notification.error(
+
+                            xhr.responseJSON?.message ||
+
+                            "Error while applying leave"
+                        );
+                    }
+                });
+            }
+        });
+
+    });
+
+</script>
+
+}

@@ -1,0 +1,122 @@
+@{
+    ViewData["Title"] = "Employee Dashboard";
+}
+
+<div class="dashboard-card">
+    <div class="page-toolbar">
+        <div>
+            <div class="page-kicker">Employee Panel</div>
+            <h1 class="page-title">Leave dashboard</h1>
+            <p class="page-subtitle">Track your applications, update future requests, delete completed ones, and manage your profile from one place.</p>
+        </div>
+        <div class="page-actions">
+            <a asp-controller="Employee" asp-action="Form" class="app-btn">Apply for leave</a>
+            <a asp-controller="Employee" asp-action="Profile" class="app-btn-outline">Update profile</a>
+        </div>
+    </div>
+
+    <div class="grid-shell">
+        <div id="grid"></div>
+    </div>
+
+    <div id="notification"></div>
+</div>
+
+@section Scripts{
+    <script>
+
+        $(document).ready(function () {
+            
+            var notification = $("#notification").kendoNotification({
+                position: { pinned: true, top: 20, right: 20 },
+                autoHideAfter: 3500,
+                stacking: "down"
+            }).data("kendoNotification");
+
+            $("#grid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "GetAllByEmp",
+                            type: "GET",
+                            dataType: "json"
+                        },
+                        update: {
+                            url: "UpdateApplication",
+                            type: "POST",
+                            contentType: "application/json"
+                        },
+                        destroy: {
+                            url: "DeleteApplication",
+                            type: "POST",
+                            contentType: "application/json"
+                        },
+                        parameterMap: function (data, type) {
+                            if (type === "destroy") {
+                                return JSON.stringify(data.applicationId);
+                            }
+
+                            if (type === "update") {
+                                return JSON.stringify({
+                                    applicationId: data.applicationId,
+                                    empId: data.empId,
+                                    leaveId: data.leaveId,
+                                    startDate: kendo.toString(data.startDate, "yyyy-MM-dd"),
+                                    endDate: kendo.toString(data.endDate, "yyyy-MM-dd"),
+                                    reason: data.reason
+                                });
+                            }
+
+                            return data;
+                        }
+                    },
+                    schema: {
+                        model: {
+                            id: "applicationId",
+                            fields: {
+                                applicationId: { type: "number", editable: false },
+                                empId: { type: "number", editable: false },
+                                leaveId: { type: "number", validation: { required: true } },
+                                startDate: { type: "date", validation: { required: true } },
+                                endDate: { type: "date", validation: { required: true } },
+                                reason: { type: "string", validation: { required: true } }
+                            }
+                        }
+                    },
+                    pageSize: 10,
+                    error: function (e) {
+                        notification.error(e.xhr?.responseJSON?.message || "Unable to process application request");
+                        this.read();
+                    }
+                },
+                pageable: { pageSizes: [5, 10, 20], refresh: true },
+                sortable: true,
+                filterable: true,
+                editable: "popup",
+                columns: [
+                    { field: "applicationId", title: "#", width: "70px", hidden: true },
+                    { field: "leaveId", title: "Leave Id", width: "120px" },
+                    { field: "startDate", title: "Start Date", format: "{0:yyyy-MM-dd}", width: "180px" },
+                    { field: "endDate", title: "End Date", format: "{0:yyyy-MM-dd}", width: "180px" },
+                    { field: "reason", title: "Reason" },
+                    {
+                        command: ["edit", "destroy"],
+                        title: "Actions",
+                        width: "220px"
+                    }
+                ],
+                save: function (e) {
+                    if (e.model.startDate && e.model.endDate && e.model.startDate > e.model.endDate) {
+                        e.preventDefault();
+                        notification.error("Ending date must be after starting date");
+                    }
+                },
+                remove: function (e) {
+                    if (!confirm("Delete this application after completion?")) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        });
+    </script>
+}

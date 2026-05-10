@@ -1,0 +1,141 @@
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="page-kicker">New Account</div>
+        <h1 class="page-title">Create your profile</h1>
+        <p class="page-subtitle">Register once and manage leave requests from a calmer, simpler interface.</p>
+    </div>
+
+    <form id="registrationForm"></form>
+
+    <div class="mt-3">
+        <a asp-controller="Auth" asp-action="Login" class="app-btn-outline">Back to login</a>
+    </div>
+
+    <div id="notification"></div>
+</div>
+
+@section Scripts{
+<script>
+
+    
+
+    // âœ… Notification
+    const notification = $("#notification").kendoNotification({
+        position: { pinned: true, top: 30, right: 30 },
+        autoHideAfter: 3000,
+        stacking: "down"
+    }).data("kendoNotification");
+
+    $("#registrationForm").kendoForm({
+        formData: {
+            Name: "",
+            Email: "",
+            Password: "",
+            Gender: "",
+            Image: null,
+            agree: false
+        },
+        items: [
+            { field: "Name", label: "Name", validation: { required: true } },
+            { field: "Email", label: "Email", validation: { required: true, email: true } },
+            {
+                field: "Password",
+                label: "Password",
+                editor: function(container, options){
+                    $(`<input type="password" data-bind="value:${options.field}" required minlength="8" pattern="^(?=.*[A-Za-z])(?=.*\\d).{8,}$" validationMessage="Use at least 8 characters with letters and numbers." />`)
+                        .appendTo(container)
+                        .kendoTextBox({
+                            placeholder: "Minimum 8 chars, 1 letter, 1 number"
+                        });
+                },
+                validation: {
+                    required: true,
+                    passwordRule: function(input) {
+                        if (input.is("[name='Password']")) {
+                            return /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(input.val());
+                        }
+                        return true;
+                    }
+                },
+                hint: "Use at least 8 characters with letters and numbers."
+            },
+            {
+                field: "Gender",
+                label: "Gender",
+                validation: { required: true },
+                editor: function(container, options) {
+                    const wrapper = $(`<div></div>`).appendTo(container);
+                    wrapper.kendoRadioGroup({
+                        items: [
+                            { value: "Male",   label: "Male"   },
+                            { value: "Female", label: "Female" }
+                        ],
+                        value: options.model.get("Gender"),
+                        change: function(e) {
+                            options.model.set("Gender", e.sender.value());
+                        }
+                    });
+                    wrapper.find("input[type='radio']").attr("name", "Gender");
+                }
+            },
+            {
+                field: "ProfilePic",
+                label: "Image",
+                editor: function(container, options) {
+                    $(`<input type="file" name="Image" id="imageInput" />`)
+                        .appendTo(container);
+                }
+            },
+            {
+                field: "agree",
+                label: "Terms",
+                editor: function(container, options) {
+                    $(`<input type="checkbox" data-bind="checked:${options.field}" />`)
+                        .appendTo(container)
+                        .kendoCheckBox({ label: "I agree" });
+                }
+            }
+        ],
+        submit: function(e) {
+            e.preventDefault();
+            if (!e.model.agree) {
+                notification.error("You must agree to terms");
+                return;
+            }
+            if (!e.model.Gender) {
+                notification.error("Please select gender");
+                return;
+            }
+            const formData = new FormData();
+            formData.append("Name", e.model.Name);
+            formData.append("Email", e.model.Email);
+            formData.append("Password", e.model.Password);
+            formData.append("Gender", e.model.Gender);
+            const fileInput = document.getElementById("imageInput");
+            const file = fileInput.files[0];
+            if (file) {
+                formData.append("ProfilePic", file);
+            }
+            $.ajax({
+                url: "Register",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function() {
+                    notification.success("Registration saved successfully.");
+                    window.location = "/Auth/login"
+                },
+                error: function(xhr) {
+                    notification.error(xhr.responseJSON?.message || "Registration failed.");
+                }
+            });
+        }
+    });
+    
+</script>
+}
